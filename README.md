@@ -1,8 +1,12 @@
 # Stockopedia Interview Project
 
-The goal of the project is to build a small interpreter for a JSON-based DSL that performs some simple analytics on a data set. This should be handled via a simple web UI.
+The goal of the project is to build a small interpreter for a JSON-based DSL that performs some simple analytics on a
+data set.
 
-You should aim to spend a few hours on the project; it's ok if you don't finish! Please indicate any areas that are incomplete and how you might finish them given more time.
+We have included basic UI boilerplate in this project to help you get started quickly. This way, you can focus your 
+attention on implementing the application logic. We expect you to spend a few hours on this project, but don't worry if 
+you don't finish everything within that timeframe. Please let us know which areas you weren't able to complete and how 
+you plan to finish them if given more time.
 
 ## Requirements
 
