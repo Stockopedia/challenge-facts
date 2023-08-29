@@ -1,7 +1,10 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import styles from "./index.module.css";
+import { validateDsl } from "../utils/dsl/validation";
+import { execute } from "../utils/dsl/executor";
+import { DSL } from "../models/dsl";
 
 interface DSLExample {
   id: string;
@@ -66,7 +69,46 @@ const examples: readonly DSLExample[] = [
 
 const Home: NextPage = () => {
   const [expression, setExpression] = useState<string>(examples[0].dsl);
-  const setDsl = (dsl: string) => () => setExpression(dsl);
+  const [expressionError, setExpressionError] = useState<boolean>(false);
+  const [expressionErrorMessage, setExpressionErrorMessage] =
+    useState<string>("");
+  const [expressionRan, setExpressionRan] = useState<boolean>(false);
+  const [expressionValue, setExpressionValue] = useState<string>("");
+
+  // This useEffect runs every time the expression is updated in state. It will then validate the expression allowing for live error checking.
+  useEffect(() => {
+    if (expression) {
+      setExpressionRan(false);
+      setExpressionValue("");
+
+      const [valid, errorString] = validateDsl(expression);
+      setExpressionError(!valid);
+      setExpressionErrorMessage(errorString);
+    }
+  }, [expression]);
+
+  // This function runs the query using the executor utility and then sets the relevant state values.
+  const runQuery = () => {
+    const [success, value, errorMessage] = execute(
+      JSON.parse(expression) as DSL,
+    );
+    if (!success) {
+      setExpressionError(!success);
+      setExpressionErrorMessage(errorMessage);
+    } else {
+      setExpressionRan(true);
+      setExpressionValue(value + "");
+    }
+  };
+
+  /**
+   * This could have been done without using useEffect.
+   *
+   * In order to do that:
+   * - a function would be created to reset the states.
+   * - that function would then be called each "run" button click.
+   * - then the validation function would be run each time the "run" button is also clicked.
+   */
 
   return (
     <>
@@ -100,7 +142,7 @@ const Home: NextPage = () => {
             {examples.map(({ id, label, dsl }) => (
               <button
                 type="button"
-                onClick={setDsl(dsl)}
+                onClick={() => setExpression(dsl)}
                 key={id}
                 data-testid={`button-${id}`}
               >
@@ -124,13 +166,31 @@ const Home: NextPage = () => {
             }
             rows={8}
           ></textarea>
-          <div className={[styles.message, styles.messageSuccess].join(" ")}>
+          <div
+            className={[
+              styles.message,
+              styles.messageSuccess,
+              expressionRan ? null : styles.messageHidden,
+            ].join(" ")}
+          >
             DSL query ran successfully!
           </div>
-          <div className={[styles.message, styles.messageError].join(" ")}>
-            There is a problem with your DSL query.
+          <div
+            className={[
+              styles.message,
+              styles.messageError,
+              expressionError ? null : styles.messageHidden,
+            ].join(" ")}
+          >
+            <p>There is a problem with your DSL query:</p>
+            <p>{expressionErrorMessage}</p>
           </div>
-          <button data-testid="run-button" type="button">
+          <button
+            onClick={() => runQuery()}
+            data-testid="run-button"
+            type="button"
+            disabled={expressionError}
+          >
             Run
           </button>
         </div>
@@ -139,10 +199,12 @@ const Home: NextPage = () => {
         <div className={styles.section}>
           <label htmlFor="dsl-output">Output:</label>
           <textarea
+            value={expressionValue}
             id="dsl-output"
             className={styles.field}
             readOnly
             rows={1}
+            data-testid="dsl-output"
           ></textarea>
         </div>
       </main>
