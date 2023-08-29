@@ -24,10 +24,16 @@ describe("Index page", () => {
 }`);
   });
 
-  // TODO: Complete this test suite once implementation is complete
-  xit('should evaluate the expression when the "run" button is clicked', () => {
+  it('should evaluate the default (multiplication) expression when the "run" button is clicked', () => {
     fireEvent.click(screen.getByTestId("run-button"));
 
-    fail("Implement me!");
+    expect(screen.getByTestId("dsl-output")).toHaveValue("8");
+  });
+
+  it('should evaluate the division expression when the "run" button is clicked', () => {
+    fireEvent.click(screen.getByTestId("button-divide"));
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    expect(screen.getByTestId("dsl-output")).toHaveValue("0.5");
   });
 });
