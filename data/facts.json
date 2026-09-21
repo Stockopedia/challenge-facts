@@ -493,10 +493,5 @@
     "security_id": 10,
     "attribute_id": 9,
     "value": 90
-  },
-  {
-    "security_id": 10,
-    "attribute_id": 10,
-    "value": 100
   }
 ]
