@@ -20,3 +20,18 @@ describe("evaluates a simple expression", () => {
     expect(evaluate(dsl)).toBe(0.5);
   });
 });
+
+describe("evaluates a nested expression", () => {
+  it("subtracts the result of two subtractions", () => {
+    const dsl = `{
+      "expression": {
+        "fn": "-",
+        "a": {"fn": "-", "a": "eps", "b": "shares"},
+        "b": {"fn": "-", "a": "assets", "b": "liabilities"}
+      },
+      "security": "CDE"
+    }`;
+
+    expect(evaluate(dsl)).toBe(-21);
+  });
+});
