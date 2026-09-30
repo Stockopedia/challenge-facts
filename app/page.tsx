@@ -67,6 +67,9 @@ const examples: readonly DSLExample[] = [
 
 const Home: FunctionComponent = () => {
   const [expression, setExpression] = useState<string>(examples[0].dsl);
+  // erm, nothing has been run yet so not sure why we have a result and an error in the JSX
+  const [result] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
   const setDsl = (dsl: string) => () => setExpression(dsl);
 
   return (
@@ -82,6 +85,7 @@ const Home: FunctionComponent = () => {
 
       {/* Pre-canned Examples Section */}
       <div className={styles.section}>
+        {/** biome-ignore lint/correctness/useUniqueElementIds: Not relevant */}
         <p id="pre-canned-description">
           <strong>Pre-canned examples:</strong>
         </p>
@@ -105,6 +109,7 @@ const Home: FunctionComponent = () => {
       {/* DSL Editor Section */}
       <div className={styles.section}>
         <label htmlFor="dsl-expression">DSL Expression:</label>
+        {/** biome-ignore lint/correctness/useUniqueElementIds: Not relevant for now */}
         <textarea
           id="dsl-expression"
           className={styles.field}
@@ -116,12 +121,21 @@ const Home: FunctionComponent = () => {
           }
           rows={8}
         ></textarea>
-        <div className={[styles.message, styles.messageSuccess].join(" ")}>
-          DSL query ran successfully!
-        </div>
-        <div className={[styles.message, styles.messageError].join(" ")}>
-          There is a problem with your DSL query.
-        </div>
+        {/* condition the result and the error messages */}
+        {result !== null && (
+          <div
+            className={[styles.message, styles.messageSuccess].join(" ")}
+          >
+            DSL query ran successfully!
+          </div>
+        )}
+        {error !== null && (
+          <div
+            className={[styles.message, styles.messageError].join(" ")}
+          >
+            There is a problem with your DSL query.
+          </div>
+        )}
         <button data-testid="run-button" type="button">
           Run
         </button>
@@ -130,9 +144,11 @@ const Home: FunctionComponent = () => {
       {/* DSL Output Section */}
       <div className={styles.section}>
         <label htmlFor="dsl-output">Output:</label>
+        {/** biome-ignore lint/correctness/useUniqueElementIds: Not relevant for now */}
         <textarea
           id="dsl-output"
           className={styles.field}
+          value={result ?? ""}
           readOnly
           rows={1}
         ></textarea>
