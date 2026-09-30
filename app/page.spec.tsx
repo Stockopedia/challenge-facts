@@ -24,7 +24,7 @@ describe("Index page", () => {
 }`);
   });
 
-  it("should not show a success/error message on page laod", () => {
+  it("should not show a success/error message on page load", () => {
     expect(screen.queryByTestId("success")).not.toBeInTheDocument();
     expect(screen.queryByTestId("error")).not.toBeInTheDocument();
     expect(screen.getByTestId("output")).toHaveValue("");
