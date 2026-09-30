@@ -125,6 +125,7 @@ const Home: FunctionComponent = () => {
         {result !== null && (
           <div
             className={[styles.message, styles.messageSuccess].join(" ")}
+            data-testid="success"
           >
             DSL query ran successfully!
           </div>
@@ -132,6 +133,7 @@ const Home: FunctionComponent = () => {
         {error !== null && (
           <div
             className={[styles.message, styles.messageError].join(" ")}
+            data-testid="error"
           >
             There is a problem with your DSL query.
           </div>
@@ -148,6 +150,7 @@ const Home: FunctionComponent = () => {
         <textarea
           id="dsl-output"
           className={styles.field}
+          data-testid="output"
           value={result ?? ""}
           readOnly
           rows={1}

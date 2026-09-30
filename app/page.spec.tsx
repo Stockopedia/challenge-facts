@@ -24,6 +24,12 @@ describe("Index page", () => {
 }`);
   });
 
+  it("should not show a success/error message on page laod", () => {
+    expect(screen.queryByTestId("success")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("error")).not.toBeInTheDocument();
+    expect(screen.getByTestId("output")).toHaveValue("");
+  });
+
   // TODO: Complete this test suite once implementation is complete
   xit('should evaluate the expression when the "run" button is clicked', () => {
     fireEvent.click(screen.getByTestId("run-button"));
