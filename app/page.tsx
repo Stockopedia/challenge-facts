@@ -1,6 +1,7 @@
 "use client";
 
-import { ChangeEvent, FunctionComponent, useState } from "react";
+import { ChangeEvent, FunctionComponent, useCallback, useState } from "react";
+import { run, type RunResult } from "../domains/dsl/run";
 
 import styles from "./page.module.css";
 
@@ -67,7 +68,16 @@ const examples: readonly DSLExample[] = [
 
 const Home: FunctionComponent = () => {
   const [expression, setExpression] = useState<string>(examples[0].dsl);
-  const setDsl = (dsl: string) => () => setExpression(dsl);
+  const [result, setResult] = useState<RunResult | null>(null);
+
+  const setDsl = (dsl: string) => () => {
+    setExpression(dsl);
+    setResult(null);
+  };
+
+  const runExpression = useCallback(() => {
+    setResult(run(expression));
+  }, [expression]);
 
   return (
     <main className={styles.container}>
@@ -111,32 +121,50 @@ const Home: FunctionComponent = () => {
           data-testid="expression-input"
           placeholder="Enter your DSL"
           value={expression}
-          onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-            setExpression(e.target.value)
-          }
+          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
+            setExpression(e.target.value);
+            setResult(null);
+          }}
           rows={8}
         ></textarea>
-        <div className={[styles.message, styles.messageSuccess].join(" ")}>
-          DSL query ran successfully!
-        </div>
-        <div className={[styles.message, styles.messageError].join(" ")}>
-          There is a problem with your DSL query.
-        </div>
-        <button data-testid="run-button" type="button">
+        {result &&
+          (result.success ? (
+            <div
+              role="alert"
+              className={[styles.message, styles.messageSuccess].join(" ")}
+            >
+              DSL query ran successfully!
+            </div>
+          ) : (
+            <div
+              role="alert"
+              className={[styles.message, styles.messageError].join(" ")}
+            >
+              There is a problem with your DSL query: {result.error.message}
+            </div>
+          ))}
+        <button
+          data-testid="run-button"
+          type="button"
+          onClick={() => runExpression()}
+        >
           Run
         </button>
       </div>
 
       {/* DSL Output Section */}
-      <div className={styles.section}>
-        <label htmlFor="dsl-output">Output:</label>
-        <textarea
-          id="dsl-output"
-          className={styles.field}
-          readOnly
-          rows={1}
-        ></textarea>
-      </div>
+      {result?.success ? (
+        <div className={styles.section}>
+          <label htmlFor="dsl-output">Output:</label>
+          <textarea
+            id="dsl-output"
+            className={styles.field}
+            readOnly
+            rows={1}
+            value={String(result.value)}
+          ></textarea>
+        </div>
+      ) : null}
     </main>
   );
 };
