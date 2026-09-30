@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FunctionComponent, useState } from "react";
+import { type ChangeEvent, type FunctionComponent, useState } from "react";
 
 import { evaluate } from "../lib/interpreter";
 import styles from "./page.module.css";
