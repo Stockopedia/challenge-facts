@@ -21,6 +21,17 @@ describe("evaluates a simple expression", () => {
   });
 });
 
+describe("rejects malformed JSON", () => {
+  it("throws when a closing brace is missing (invalid JSON)", () => {
+    const dsl = `{
+      "expression": {"fn": "+", "a": "price", "b": "eps"},
+      "security": "BCD"
+    `;
+
+    expect(() => evaluate(dsl)).toThrow("Invalid JSON");
+  });
+});
+
 describe("evaluates a nested expression", () => {
   it("subtracts the result of two subtractions", () => {
     const dsl = `{

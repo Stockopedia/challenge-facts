@@ -70,9 +70,18 @@ const Home: FunctionComponent = () => {
   const [expression, setExpression] = useState<string>(examples[0].dsl);
   // erm, nothing has been run yet so not sure why we have a result and an error in the JSX
   const [result, setResult] = useState<string | null>(null);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const setDsl = (dsl: string) => () => setExpression(dsl);
-  const run = () => setResult(String(evaluate(expression)));
+  const run = () => {
+    // clear the previous result/error
+    setResult(null);
+    setError(null);
+    try {
+      setResult(String(evaluate(expression)));
+    } catch (e) {
+      setError((e.message);
+    }
+  };
 
   return (
     <main className={styles.container}>
@@ -137,7 +146,7 @@ const Home: FunctionComponent = () => {
             className={[styles.message, styles.messageError].join(" ")}
             data-testid="error"
           >
-            There is a problem with your DSL query.
+            There is a problem with your DSL query: {error}
           </div>
         )}
         <button data-testid="run-button" type="button" onClick={run}>

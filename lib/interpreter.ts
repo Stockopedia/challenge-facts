@@ -61,8 +61,13 @@ const calculate = (expression: Expression, securityId: number): number => {
 
 // this now reads the text the user typed then finds the security and we get back the final number
 export const evaluate = (text: string): number => {
-
-  const query: Query = JSON.parse(text);
+  // JSON.parse throws here so we catch that
+  let query: Query;
+  try {
+    query = JSON.parse(text);
+  } catch (e) {
+    throw new Error(`Invalid JSON: ${(e as Error).message}`);
+  }
   const { security, expression } = query;
 
   // we cast to a number for now, will deal with edge cases later
