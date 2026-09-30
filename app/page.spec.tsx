@@ -30,10 +30,12 @@ describe("Index page", () => {
     expect(screen.getByTestId("output")).toHaveValue("");
   });
 
-  // TODO: Complete this test suite once implementation is complete
-  xit('should evaluate the expression when the "run" button is clicked', () => {
-    fireEvent.click(screen.getByTestId("run-button"));
+  it('should evaluate the expression when the "run" button is clicked', () => {
+			fireEvent.click(screen.getByTestId("run-button"));
 
-    fail("Implement me!");
-  });
+      // adding basic checks re erorr, result, output
+			expect(screen.getByTestId("output")).toHaveValue("8");
+			expect(screen.getByTestId("success")).toBeInTheDocument();
+			expect(screen.queryByTestId("error")).not.toBeInTheDocument();
+		});
 });
