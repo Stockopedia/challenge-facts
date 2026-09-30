@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FunctionComponent, useState } from "react";
 
+import { evaluate } from "../lib/interpreter";
 import styles from "./page.module.css";
 
 interface DSLExample {
@@ -68,9 +69,10 @@ const examples: readonly DSLExample[] = [
 const Home: FunctionComponent = () => {
   const [expression, setExpression] = useState<string>(examples[0].dsl);
   // erm, nothing has been run yet so not sure why we have a result and an error in the JSX
-  const [result] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(null);
   const [error] = useState<string | null>(null);
   const setDsl = (dsl: string) => () => setExpression(dsl);
+  const run = () => setResult(String(evaluate(expression)));
 
   return (
     <main className={styles.container}>
@@ -138,7 +140,7 @@ const Home: FunctionComponent = () => {
             There is a problem with your DSL query.
           </div>
         )}
-        <button data-testid="run-button" type="button">
+        <button data-testid="run-button" type="button" onClick={run}>
           Run
         </button>
       </div>
