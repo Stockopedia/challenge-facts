@@ -79,7 +79,7 @@ const Home: FunctionComponent = () => {
     try {
       setResult(String(evaluate(expression)));
     } catch (e) {
-      setError((e.message);
+      setError((e as Error).message);
     }
   };
 
