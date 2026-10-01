@@ -137,6 +137,7 @@ Add one line to the `operators` object in `lib/interpreter.ts`, for example `"%"
 - WOuld change the arr lookups from find to a map as then each lookup would be a direct get.
 - We can show different things for different errors due to those error classes but UI wise it looks the same, I'd prettify that in the page.
 - The data and the `Fact` model aren't in sync, `Fact` uses camelCase.
+- Dismissing the error after the user clicks on another example
 
 ## Developing
 
