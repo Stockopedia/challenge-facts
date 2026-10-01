@@ -67,4 +67,37 @@ describe("Index page", () => {
     expect(screen.queryByTestId("success")).not.toBeInTheDocument();
     expect(screen.getByTestId("output")).toHaveValue("");
   });
+
+  it.each([
+    ["button-divide", "0.5"],
+    ["button-nested", "-21"],
+  ])("should show the result of the %s example", (button, result) => {
+    fireEvent.click(screen.getByTestId(button));
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    expect(screen.getByTestId("output")).toHaveValue(result);
+    expect(screen.getByTestId("success")).toBeInTheDocument();
+    expect(screen.queryByTestId("error")).not.toBeInTheDocument();
+  });
+
+  it("should clear the previous result when the next run fails", () => {
+    fireEvent.click(screen.getByTestId("run-button"));
+    fireEvent.click(screen.getByTestId("button-invalid-json"));
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    expect(screen.getByTestId("error")).toBeInTheDocument();
+    expect(screen.queryByTestId("success")).not.toBeInTheDocument();
+    expect(screen.getByTestId("output")).toHaveValue("");
+  });
+
+  it("should clear the previous error when the next run works", () => {
+    fireEvent.click(screen.getByTestId("button-invalid-json"));
+    fireEvent.click(screen.getByTestId("run-button"));
+    fireEvent.click(screen.getByTestId("button-multiply"));
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    expect(screen.getByTestId("success")).toBeInTheDocument();
+    expect(screen.queryByTestId("error")).not.toBeInTheDocument();
+    expect(screen.getByTestId("output")).toHaveValue("8");
+  });
 });
