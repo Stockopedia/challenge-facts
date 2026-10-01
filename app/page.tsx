@@ -1,7 +1,9 @@
 "use client";
 
-import { ChangeEvent, FunctionComponent, useState } from "react";
+import { type ChangeEvent, type FunctionComponent, useState } from "react";
 
+import { DslError } from "../lib/errors";
+import { evaluate } from "../lib/interpreter";
 import styles from "./page.module.css";
 
 interface DSLExample {
@@ -67,7 +69,29 @@ const examples: readonly DSLExample[] = [
 
 const Home: FunctionComponent = () => {
   const [expression, setExpression] = useState<string>(examples[0].dsl);
-  const setDsl = (dsl: string) => () => setExpression(dsl);
+  // erm, nothing has been run yet so not sure why we have a result and an error in the JSX
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // the old result or error belongs to the old text
+  const changeExpression = (dsl: string) => {
+    setExpression(dsl);
+    setResult(null);
+    setError(null);
+  };
+  const setDsl = (dsl: string) => () => changeExpression(dsl);
+  const run = () => {
+    // clear the previous result/error
+    setResult(null);
+    setError(null);
+    try {
+      setResult(String(evaluate(expression)));
+    } catch (e) {
+      if (!(e instanceof DslError)) {
+        throw e;
+      }
+      setError(e.message);
+    }
+  };
 
   return (
     <main className={styles.container}>
@@ -82,6 +106,7 @@ const Home: FunctionComponent = () => {
 
       {/* Pre-canned Examples Section */}
       <div className={styles.section}>
+        {/** biome-ignore lint/correctness/useUniqueElementIds: Not relevant */}
         <p id="pre-canned-description">
           <strong>Pre-canned examples:</strong>
         </p>
@@ -105,6 +130,7 @@ const Home: FunctionComponent = () => {
       {/* DSL Editor Section */}
       <div className={styles.section}>
         <label htmlFor="dsl-expression">DSL Expression:</label>
+        {/** biome-ignore lint/correctness/useUniqueElementIds: Not relevant for now */}
         <textarea
           id="dsl-expression"
           className={styles.field}
@@ -112,17 +138,28 @@ const Home: FunctionComponent = () => {
           placeholder="Enter your DSL"
           value={expression}
           onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-            setExpression(e.target.value)
+            changeExpression(e.target.value)
           }
           rows={8}
         ></textarea>
-        <div className={[styles.message, styles.messageSuccess].join(" ")}>
-          DSL query ran successfully!
-        </div>
-        <div className={[styles.message, styles.messageError].join(" ")}>
-          There is a problem with your DSL query.
-        </div>
-        <button data-testid="run-button" type="button">
+        {/* condition the result and the error messages */}
+        {result !== null && (
+          <div
+            className={[styles.message, styles.messageSuccess].join(" ")}
+            data-testid="success"
+          >
+            DSL query ran successfully!
+          </div>
+        )}
+        {error !== null && (
+          <div
+            className={[styles.message, styles.messageError].join(" ")}
+            data-testid="error"
+          >
+            There is a problem with your DSL query: {error}
+          </div>
+        )}
+        <button data-testid="run-button" type="button" onClick={run}>
           Run
         </button>
       </div>
@@ -130,9 +167,12 @@ const Home: FunctionComponent = () => {
       {/* DSL Output Section */}
       <div className={styles.section}>
         <label htmlFor="dsl-output">Output:</label>
+        {/** biome-ignore lint/correctness/useUniqueElementIds: Not relevant for now */}
         <textarea
           id="dsl-output"
           className={styles.field}
+          data-testid="output"
+          value={result ?? ""}
           readOnly
           rows={1}
         ></textarea>

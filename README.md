@@ -3,9 +3,9 @@
 The goal of the project is to build a small interpreter for a JSON-based DSL that performs some simple analytics on a
 data set.
 
-We have included basic UI boilerplate in this project to help you get started quickly. This way, you can focus your 
-attention on implementing the application logic. We expect you to spend a few hours on this project, but don't worry if 
-you don't finish everything within that timeframe. Please let us know which areas you weren't able to complete and how 
+We have included basic UI boilerplate in this project to help you get started quickly. This way, you can focus your
+attention on implementing the application logic. We expect you to spend a few hours on this project, but don't worry if
+you don't finish everything within that timeframe. Please let us know which areas you weren't able to complete and how
 you plan to finish them if given more time.
 
 ## Requirements
@@ -114,6 +114,30 @@ operator and attribute names as arguments:
   "security": "CDE"
 }
 ```
+
+## Solution
+
+All four operators (`+`, `-`, `*`, `/`) are implemented and we can nest an expression at any depth. Commit history is written to be read in order, small new steps and the newer ones improve the older.
+
+- The `interpreter.ts` has `evaluate(text)` so it takes the text the user typed and returns a number or throws an error, React or no React.
+- `lib/errors.ts` one class per possible issue
+- `models/query.ts` contains ~~nuts~~ `Query` and `Expression` types.
+- `app/page.tsx` we just call `evaluate` and show the result or the error message, if any
+- `lib/interpreter.spec.ts` has the tests (`pnpm test`)
+
+The shape is checked with a recursive `Zod` schema.
+
+### Operators
+
+Add one line to the `operators` object in `lib/interpreter.ts`, for example `"%": (a, b) => a % b`. The shape check and its error message read the same object
+
+### What I would do with more time
+
+- No rounding/formatting for numbers so we will end up with funny looking long numbers, I'd fix that too
+- WOuld change the arr lookups from find to a map as then each lookup would be a direct get.
+- We can show different things for different errors due to those error classes but UI wise it looks the same, I'd prettify that in the page.
+- The data and the `Fact` model aren't in sync, `Fact` uses camelCase.
+- Dismissing the error after the user clicks on another example
 
 ## Developing
 
