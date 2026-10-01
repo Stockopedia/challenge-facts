@@ -43,32 +43,31 @@ const getNumber = (
   return fact.value;
 };
 
+// we have every operator we support and what it does with the two numbers
+// so we had this list in both the switch and in the shape check so adding an operator meant remembering both places
+const operators: Record<string, (a: number, b: number) => number> = {
+  "+": (a, b) => a + b,
+  "-": (a, b) => a - b,
+  "*": (a, b) => a * b,
+  "/": (a, b) => {
+    // dividing by zero gives will look like a real answer and that's not right
+    if (b === 0) {
+      throw new DivisionByZeroError("Can't divide by zero");
+    }
+    return a / b;
+  },
+};
+
+const operatorSymbols = Object.keys(operators);
+
 // both sides have to be numbers before we can apply the operator, now a side can be another expression hence we calls getNumber which is then calling calculate again
 const calculate = (expression: Expression, securityId: number): number => {
   const a = getNumber(expression.a, securityId);
   const b = getNumber(expression.b, securityId);
 
   // the operator will decide what we'll do with the two numbers
-  switch (expression.fn) {
-    case "+":
-      return a + b;
-    case "-":
-      return a - b;
-    case "*":
-      return a * b;
-    case "/":
-      // dividing by zero gives will look like a real answer and that's not right
-      if (b === 0) {
-        throw new DivisionByZeroError("Can't divide by zero");
-      }
-      return a / b;
-    default:
-      // this should be fine for now, deal with it later
-      return NaN;
-  }
+  return operators[expression.fn](a, b);
 };
-
-const operators = ["+", "-", "*", "/"];
 
 const objectCheck = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -80,9 +79,12 @@ const checkExpression = (expression: unknown, name: string): void => {
     throw new InvalidShapeError(`Invalid DSL: "${name}" must be an object`);
   }
 
-  if (typeof expression.fn !== "string" || !operators.includes(expression.fn)) {
+  if (
+    typeof expression.fn !== "string" ||
+    !operatorSymbols.includes(expression.fn)
+  ) {
     throw new InvalidShapeError(
-      `Invalid DSL: "${name}.fn" must be one of ${operators.join(" ")}`,
+      `Invalid DSL: "${name}.fn" must be one of ${operatorSymbols.join(" ")}`,
     );
   }
 
