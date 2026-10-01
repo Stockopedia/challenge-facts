@@ -72,7 +72,9 @@ describe("rejects a wrongly shaped JSON", () => {
       "security": "ABC"
     }`;
 
-    expect(() => evaluate(dsl)).toThrow('"expression.a" must be an object');
+    expect(() => evaluate(dsl)).toThrow(
+      '"expression.a" must be a number, an attribute name or an expression',
+    );
   });
 
   it("names the path when when we have an issue inside a nested expression", () => {

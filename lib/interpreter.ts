@@ -1,5 +1,6 @@
 import attributes from "../data/attributes.json";
 import facts from "../data/facts.json";
+import { z } from "zod";
 import securities from "../data/securities.json";
 import type { Expression, Query } from "../models/query";
 import {
@@ -14,7 +15,6 @@ const getNumber = (
   operand: string | number | Expression,
   securityId: number,
 ): number => {
-
   if (typeof operand === "number") {
     return operand;
   }
@@ -69,48 +69,47 @@ const calculate = (expression: Expression, securityId: number): number => {
   return operators[expression.fn](a, b);
 };
 
-const objectCheck = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
-
 // valid JSON can still be the wrong shape, e.g. no "expression" at all, and then calculate would crash with an unclear message
-// so we check everything first and say which field is wrong, name is where we are in the query like "expression.a"
-const checkExpression = (expression: unknown, name: string): void => {
-  if (!objectCheck(expression)) {
-    throw new InvalidShapeError(`Invalid DSL: "${name}" must be an object`);
-  }
-
-  if (
-    typeof expression.fn !== "string" ||
-    !operatorSymbols.includes(expression.fn)
-  ) {
-    throw new InvalidShapeError(
-      `Invalid DSL: "${name}.fn" must be one of ${operatorSymbols.join(" ")}`,
-    );
-  }
-
-  checkOperand(expression.a, `${name}.a`);
-  checkOperand(expression.b, `${name}.b`);
-};
+// so the schema describes the shape we expect and Zod now checks that for us
+// expressionSchema has to be lazy because an expression can hold another expression inside it
+const expressionSchema: z.ZodType<Expression> = z.lazy(() =>
+  z.object(
+    {
+      fn: z
+        .string({ error: "must be a string" })
+        .refine((fn) => operatorSymbols.includes(fn), {
+          error: `must be one of ${operatorSymbols.join(" ")}`,
+        }),
+      a: operandSchema,
+      b: operandSchema,
+    },
+    { error: "must be an object" },
+  ),
+);
 
 // a side is fine as a number or an attribute name, anything else must be another expression
-const checkOperand = (operand: unknown, name: string): void => {
-  if (typeof operand === "number" || typeof operand === "string") {
-    return;
+const operandSchema = z.union([z.number(), z.string(), expressionSchema], {
+  error: "must be a number, an attribute name or an expression",
+});
+
+const querySchema: z.ZodType<Query> = z.object(
+  {
+    security: z.string({ error: "must be a string" }),
+    expression: expressionSchema,
+  },
+  { error: "must be an object" },
+);
+
+// we only report the first problem, path is where it is in the query like "expression.a"
+const checkQuery = (parsed: unknown): Query => {
+  const result = querySchema.safeParse(parsed);
+  if (!result.success) {
+    const { path, message } = result.error.issues[0];
+    const where = path.length ? `"${path.join(".")}"` : "the query";
+    throw new InvalidShapeError(`Invalid DSL: ${where} ${message}`);
   }
 
-  checkExpression(operand, name);
-};
-
-const checkQuery = (query: unknown): void => {
-  if (!objectCheck(query)) {
-    throw new InvalidShapeError("Invalid DSL: the query must be an object");
-  }
-
-  if (typeof query.security !== "string") {
-    throw new InvalidShapeError('Invalid DSL: "security" must be a string');
-  }
-
-  checkExpression(query.expression, "expression");
+  return result.data;
 };
 
 // this now reads the text the user typed then finds the security and we get back the final number
@@ -123,8 +122,7 @@ export const evaluate = (text: string): number => {
     throw new InvalidJsonError(`Invalid JSON: ${(e as Error).message}`);
   }
 
-  checkQuery(parsed);
-  const { security, expression } = parsed as Query;
+  const { security, expression } = checkQuery(parsed);
 
   const foundSecurity = securities.find((s) => s.symbol === security);
   if (!foundSecurity) {
