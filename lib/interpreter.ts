@@ -1,25 +1,13 @@
 import attributes from "../data/attributes.json";
 import facts from "../data/facts.json";
 import securities from "../data/securities.json";
+import type { Expression, Query } from "../models/query";
 import {
   DivisionByZeroError,
   InvalidJsonError,
   InvalidShapeError,
   LookupError,
 } from "./errors";
-
-// so a side on an expression could be a number or an attribute name or another expr inside it
-// move later to  its own file
-interface Expression {
-  fn: string;
-  a: string | number | Expression;
-  b: string | number | Expression;
-}
-
-interface Query {
-  security: string;
-  expression: Expression;
-}
 
 // we need two numbers but a side can also be an attribute name like "sales" OR anotehr expression so we just turn whatever we get into a number
 const getNumber = (
