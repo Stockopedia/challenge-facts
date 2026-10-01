@@ -1,6 +1,12 @@
 import attributes from "../data/attributes.json";
 import facts from "../data/facts.json";
 import securities from "../data/securities.json";
+import {
+  DivisionByZeroError,
+  InvalidJsonError,
+  InvalidShapeError,
+  LookupError,
+} from "./errors";
 
 // so a side on an expression could be a number or an attribute name or another expr inside it
 // move later to  its own file
@@ -33,7 +39,7 @@ const getNumber = (
   // it must be an attribute name
   const attribute = attributes.find((attr) => attr.name === operand);
   if (!attribute) {
-    throw new Error(`Unknown attribute "${operand}"`);
+    throw new LookupError(`Unknown attribute "${operand}"`);
   }
 
   // the attribute might exist but not every security has a fact for it
@@ -41,7 +47,7 @@ const getNumber = (
     (f) => f.security_id === securityId && f.attribute_id === attribute.id,
   );
   if (!fact) {
-    throw new Error(
+    throw new LookupError(
       `We don't have a fact for attribute "${operand}" on the security with id ${securityId}`,
     );
   }
@@ -65,7 +71,7 @@ const calculate = (expression: Expression, securityId: number): number => {
     case "/":
       // dividing by zero gives will look like a real answer and that's not right
       if (b === 0) {
-        throw new Error("Can't divide by zero");
+        throw new DivisionByZeroError("Can't divide by zero");
       }
       return a / b;
     default:
@@ -83,11 +89,11 @@ const objectCheck = (value: unknown): value is Record<string, unknown> =>
 // so we check everything first and say which field is wrong, name is where we are in the query like "expression.a"
 const checkExpression = (expression: unknown, name: string): void => {
   if (!objectCheck(expression)) {
-    throw new Error(`Invalid DSL: "${name}" must be an object`);
+    throw new InvalidShapeError(`Invalid DSL: "${name}" must be an object`);
   }
 
   if (typeof expression.fn !== "string" || !operators.includes(expression.fn)) {
-    throw new Error(
+    throw new InvalidShapeError(
       `Invalid DSL: "${name}.fn" must be one of ${operators.join(" ")}`,
     );
   }
@@ -107,11 +113,11 @@ const checkOperand = (operand: unknown, name: string): void => {
 
 const checkQuery = (query: unknown): void => {
   if (!objectCheck(query)) {
-    throw new Error("Invalid DSL: the query must be an object");
+    throw new InvalidShapeError("Invalid DSL: the query must be an object");
   }
 
   if (typeof query.security !== "string") {
-    throw new Error('Invalid DSL: "security" must be a string');
+    throw new InvalidShapeError('Invalid DSL: "security" must be a string');
   }
 
   checkExpression(query.expression, "expression");
@@ -124,7 +130,7 @@ export const evaluate = (text: string): number => {
   try {
     parsed = JSON.parse(text);
   } catch (e) {
-    throw new Error(`Invalid JSON: ${(e as Error).message}`);
+    throw new InvalidJsonError(`Invalid JSON: ${(e as Error).message}`);
   }
 
   checkQuery(parsed);
@@ -132,7 +138,7 @@ export const evaluate = (text: string): number => {
 
   const foundSecurity = securities.find((s) => s.symbol === security);
   if (!foundSecurity) {
-    throw new Error(`Unknown security "${security}"`);
+    throw new LookupError(`Unknown security "${security}"`);
   }
 
   return calculate(expression, foundSecurity.id);

@@ -1,3 +1,9 @@
+import {
+  DivisionByZeroError,
+  InvalidJsonError,
+  InvalidShapeError,
+  LookupError,
+} from "./errors";
 import { evaluate } from "./interpreter";
 
 describe("evaluates a simple expression", () => {
@@ -122,8 +128,50 @@ describe("rejects a lookup that fails", () => {
     }`;
 
     expect(() => evaluate(dsl)).toThrow(
-      'No fact for attribute "shares" on the security with id 10',
+      'We don\'t have a fact for attribute "shares" on the security with id 10',
     );
+  });
+});
+
+describe("throws a typed error for each kind of problem", () => {
+  const throwsError = (dsl: string) => () => evaluate(dsl);
+
+  it("throws InvalidJsonError for malformed JSON", () => {
+    expect(throwsError(`{ "security": "ABC"`)).toThrow(InvalidJsonError);
+  });
+
+  it("throws InvalidShapeError for a wrong shape", () => {
+    expect(throwsError(`{ "wrong": 123, "security": "BCD" }`)).toThrow(
+      InvalidShapeError,
+    );
+  });
+
+  it("throws LookupError for an unknown security, attribute or fact", () => {
+    const unknownSecurity = `{
+      "expression": {"fn": "*", "a": "sales", "b": 2},
+      "security": "ZZZ"
+    }`;
+    const unknownAttribute = `{
+      "expression": {"fn": "*", "a": "turnover", "b": 2},
+      "security": "ABC"
+    }`;
+    const missingFact = `{
+      "expression": {"fn": "*", "a": "shares", "b": 2},
+      "security": "JKL"
+    }`;
+
+    expect(throwsError(unknownSecurity)).toThrow(LookupError);
+    expect(throwsError(unknownAttribute)).toThrow(LookupError);
+    expect(throwsError(missingFact)).toThrow(LookupError);
+  });
+
+  it("throws DivisionByZeroError when dividing by zero", () => {
+    const dsl = `{
+      "expression": {"fn": "/", "a": "price", "b": 0},
+      "security": "ABC"
+    }`;
+
+    expect(throwsError(dsl)).toThrow(DivisionByZeroError);
   });
 });
 
