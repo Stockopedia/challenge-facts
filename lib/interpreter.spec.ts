@@ -127,6 +127,30 @@ describe("rejects a lookup that fails", () => {
   });
 });
 
+describe("rejects a division by zero", () => {
+  it("throws when dividing by zero", () => {
+    const dsl = `{
+      "expression": {"fn": "/", "a": "price", "b": 0},
+      "security": "ABC"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow("Can't divide by zero");
+  });
+
+  it("throws when the divisor is an expression that works out to zero", () => {
+    const dsl = `{
+      "expression": {
+        "fn": "/",
+        "a": "price",
+        "b": {"fn": "-", "a": "eps", "b": "eps"}
+      },
+      "security": "ABC"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow("Can't divide by zero");
+  });
+});
+
 describe("evaluates a nested expression", () => {
   it("subtracts the result of two subtractions", () => {
     const dsl = `{

@@ -63,6 +63,10 @@ const calculate = (expression: Expression, securityId: number): number => {
     case "*":
       return a * b;
     case "/":
+      // dividing by zero gives will look like a real answer and that's not right
+      if (b === 0) {
+        throw new Error("Can't divide by zero");
+      }
       return a / b;
     default:
       // this should be fine for now, deal with it later
