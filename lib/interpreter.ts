@@ -66,7 +66,7 @@ const objectCheck = (value: unknown): value is Record<string, unknown> =>
 
 // valid JSON can still be the wrong shape, e.g. no "expression" at all, and then calculate would crash with an unclear message
 // so we check everything first and say which field is wrong, name is where we are in the query like "expression.a"
-const checkExpression = (expression: any, name: string): void => {
+const checkExpression = (expression: unknown, name: string): void => {
   if (!objectCheck(expression)) {
     throw new Error(`Invalid DSL: "${name}" must be an object`);
   }
@@ -82,7 +82,7 @@ const checkExpression = (expression: any, name: string): void => {
 };
 
 // a side is fine as a number or an attribute name, anything else must be another expression
-const checkOperand = (operand: any, name: string): void => {
+const checkOperand = (operand: unknown, name: string): void => {
   if (typeof operand === "number" || typeof operand === "string") {
     return;
   }
@@ -90,7 +90,7 @@ const checkOperand = (operand: any, name: string): void => {
   checkExpression(operand, name);
 };
 
-const checkQuery = (query: any): void => {
+const checkQuery = (query: unknown): void => {
   if (!objectCheck(query)) {
     throw new Error("Invalid DSL: the query must be an object");
   }
@@ -105,7 +105,7 @@ const checkQuery = (query: any): void => {
 // this now reads the text the user typed then finds the security and we get back the final number
 export const evaluate = (text: string): number => {
   // JSON.parse throws here so we catch that
-  let parsed: any;
+  let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch (e) {
