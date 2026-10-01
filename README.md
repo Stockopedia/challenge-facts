@@ -123,7 +123,7 @@ All four operators (`+`, `-`, `*`, `/`) are implemented and we can nest an expre
 - `lib/errors.ts` one class per possible issue
 - `models/query.ts` contains ~~nuts~~ `Query` and `Expression` types.
 - `app/page.tsx` we just call `evaluate` and show the result or the error message, if any
-- `lib/interpreter.spec.ts` has the tests (`pnpm test`)                            |
+- `lib/interpreter.spec.ts` has the tests (`pnpm test`)
 
 The shape is checked with a recursive `Zod` schema.
 
