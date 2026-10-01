@@ -102,6 +102,29 @@ describe("rejects a lookup that fails", () => {
     expect(() => evaluate(dsl)).toThrow('Unknown attribute "turnover"');
   });
 
+  it("throws when attribute is unknown inside a nested expression", () => {
+    const dsl = `{
+      "expression": {
+        "fn": "-",
+        "a": {"fn": "-", "a": "eps", "b": "shares"},
+        "b": {"fn": "-", "a": "assets", "b": "turnover"}
+      },
+      "security": "CDE"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow('Unknown attribute "turnover"');
+  });
+
+  it("throws when the security has no fact for an attribute", () => {
+    const dsl = `{
+      "expression": {"fn": "*", "a": "shares", "b": 2},
+      "security": "JKL"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow(
+      'No fact for attribute "shares" on the security with id 10',
+    );
+  });
 });
 
 describe("evaluates a nested expression", () => {
