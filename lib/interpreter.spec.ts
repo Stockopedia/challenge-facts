@@ -1,5 +1,6 @@
 import {
   DivisionByZeroError,
+  DslError,
   InvalidJsonError,
   InvalidShapeError,
   LookupError,
@@ -7,7 +8,6 @@ import {
 import { evaluate } from "./interpreter";
 
 describe("evaluates a simple expression", () => {
-
   it("multiplies an attribute (by a number)", () => {
     const dsl = `{
       "expression": {"fn": "*", "a": "sales", "b": 2},
@@ -130,7 +130,7 @@ describe("rejects a lookup that fails", () => {
     }`;
 
     expect(() => evaluate(dsl)).toThrow(
-      'We don\'t have a fact for attribute "shares" on the security with id 10',
+      'We don\'t have a fact for attribute "shares" on the security "JKL"',
     );
   });
 });
@@ -165,6 +165,13 @@ describe("throws a typed error for each kind of problem", () => {
     expect(throwsError(unknownSecurity)).toThrow(LookupError);
     expect(throwsError(unknownAttribute)).toThrow(LookupError);
     expect(throwsError(missingFact)).toThrow(LookupError);
+  });
+
+  it("throws errors that are all DslErrors", () => {
+    expect(new InvalidJsonError("")).toBeInstanceOf(DslError);
+    expect(new InvalidShapeError("")).toBeInstanceOf(DslError);
+    expect(new LookupError("")).toBeInstanceOf(DslError);
+    expect(new DivisionByZeroError("")).toBeInstanceOf(DslError);
   });
 
   it("throws DivisionByZeroError when dividing by zero", () => {

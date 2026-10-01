@@ -3,6 +3,7 @@ import facts from "../data/facts.json";
 import { z } from "zod";
 import securities from "../data/securities.json";
 import type { Expression, Query } from "../models/query";
+import type { Security } from "../models/security";
 import {
   DivisionByZeroError,
   InvalidJsonError,
@@ -13,7 +14,7 @@ import {
 // we need two numbers but a side can also be an attribute name like "sales" OR anotehr expression so we just turn whatever we get into a number
 const getNumber = (
   operand: string | number | Expression,
-  securityId: number,
+  security: Security,
 ): number => {
   if (typeof operand === "number") {
     return operand;
@@ -21,7 +22,7 @@ const getNumber = (
 
   // so an object means another expression inside this one!
   if (typeof operand === "object") {
-    return calculate(operand, securityId);
+    return calculate(operand, security);
   }
 
   // it must be an attribute name
@@ -32,11 +33,11 @@ const getNumber = (
 
   // the attribute might exist but not every security has a fact for it
   const fact = facts.find(
-    (f) => f.security_id === securityId && f.attribute_id === attribute.id,
+    (f) => f.security_id === security.id && f.attribute_id === attribute.id,
   );
   if (!fact) {
     throw new LookupError(
-      `We don't have a fact for attribute "${operand}" on the security with id ${securityId}`,
+      `We don't have a fact for attribute "${operand}" on the security "${security.symbol}"`,
     );
   }
 
@@ -61,9 +62,9 @@ const operators: Record<string, (a: number, b: number) => number> = {
 const operatorSymbols = Object.keys(operators);
 
 // both sides have to be numbers before we can apply the operator, now a side can be another expression hence we calls getNumber which is then calling calculate again
-const calculate = (expression: Expression, securityId: number): number => {
-  const a = getNumber(expression.a, securityId);
-  const b = getNumber(expression.b, securityId);
+const calculate = (expression: Expression, security: Security): number => {
+  const a = getNumber(expression.a, security);
+  const b = getNumber(expression.b, security);
 
   // the operator will decide what we'll do with the two numbers
   return operators[expression.fn](a, b);
@@ -129,5 +130,5 @@ export const evaluate = (text: string): number => {
     throw new LookupError(`Unknown security "${security}"`);
   }
 
-  return calculate(expression, foundSecurity.id);
+  return calculate(expression, foundSecurity);
 };

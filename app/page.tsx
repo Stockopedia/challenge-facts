@@ -2,6 +2,7 @@
 
 import { type ChangeEvent, type FunctionComponent, useState } from "react";
 
+import { DslError } from "../lib/errors";
 import { evaluate } from "../lib/interpreter";
 import styles from "./page.module.css";
 
@@ -71,7 +72,13 @@ const Home: FunctionComponent = () => {
   // erm, nothing has been run yet so not sure why we have a result and an error in the JSX
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const setDsl = (dsl: string) => () => setExpression(dsl);
+  // the old result or error belongs to the old text
+  const changeExpression = (dsl: string) => {
+    setExpression(dsl);
+    setResult(null);
+    setError(null);
+  };
+  const setDsl = (dsl: string) => () => changeExpression(dsl);
   const run = () => {
     // clear the previous result/error
     setResult(null);
@@ -79,7 +86,10 @@ const Home: FunctionComponent = () => {
     try {
       setResult(String(evaluate(expression)));
     } catch (e) {
-      setError((e as Error).message);
+      if (!(e instanceof DslError)) {
+        throw e;
+      }
+      setError(e.message);
     }
   };
 
@@ -128,7 +138,7 @@ const Home: FunctionComponent = () => {
           placeholder="Enter your DSL"
           value={expression}
           onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-            setExpression(e.target.value)
+            changeExpression(e.target.value)
           }
           rows={8}
         ></textarea>

@@ -31,13 +31,13 @@ describe("Index page", () => {
   });
 
   it('should evaluate the expression when the "run" button is clicked', () => {
-			fireEvent.click(screen.getByTestId("run-button"));
+    fireEvent.click(screen.getByTestId("run-button"));
 
-      // adding basic checks re erorr, result, output
-			expect(screen.getByTestId("output")).toHaveValue("8");
-			expect(screen.getByTestId("success")).toBeInTheDocument();
-			expect(screen.queryByTestId("error")).not.toBeInTheDocument();
-		});
+    // adding basic checks re error, result, output
+    expect(screen.getByTestId("output")).toHaveValue("8");
+    expect(screen.getByTestId("success")).toBeInTheDocument();
+    expect(screen.queryByTestId("error")).not.toBeInTheDocument();
+  });
 
   it("should show an error (and no result) when the JSON is not valid", () => {
     fireEvent.click(screen.getByTestId("button-invalid-json"));
@@ -99,5 +99,33 @@ describe("Index page", () => {
     expect(screen.getByTestId("success")).toBeInTheDocument();
     expect(screen.queryByTestId("error")).not.toBeInTheDocument();
     expect(screen.getByTestId("output")).toHaveValue("8");
+  });
+
+  it("should clear the result when the expression is edited", () => {
+    fireEvent.click(screen.getByTestId("run-button"));
+    fireEvent.change(screen.getByTestId("expression-input"), {
+      target: { value: "{}" },
+    });
+
+    expect(screen.queryByTestId("success")).not.toBeInTheDocument();
+    expect(screen.getByTestId("output")).toHaveValue("");
+  });
+
+  it("should clear the error when the expression is edited", () => {
+    fireEvent.click(screen.getByTestId("button-invalid-json"));
+    fireEvent.click(screen.getByTestId("run-button"));
+    fireEvent.change(screen.getByTestId("expression-input"), {
+      target: { value: "{}" },
+    });
+
+    expect(screen.queryByTestId("error")).not.toBeInTheDocument();
+  });
+
+  it("should clear the result when an example is chosen", () => {
+    fireEvent.click(screen.getByTestId("run-button"));
+    fireEvent.click(screen.getByTestId("button-divide"));
+
+    expect(screen.queryByTestId("success")).not.toBeInTheDocument();
+    expect(screen.getByTestId("output")).toHaveValue("");
   });
 });
