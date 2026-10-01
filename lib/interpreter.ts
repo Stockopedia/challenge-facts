@@ -59,16 +59,61 @@ const calculate = (expression: Expression, securityId: number): number => {
   }
 };
 
+const operators = ["+", "-", "*", "/"];
+
+const objectCheck = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+// valid JSON can still be the wrong shape, e.g. no "expression" at all, and then calculate would crash with an unclear message
+// so we check everything first and say which field is wrong, name is where we are in the query like "expression.a"
+const checkExpression = (expression: any, name: string): void => {
+  if (!objectCheck(expression)) {
+    throw new Error(`Invalid DSL: "${name}" must be an object`);
+  }
+
+  if (typeof expression.fn !== "string" || !operators.includes(expression.fn)) {
+    throw new Error(
+      `Invalid DSL: "${name}.fn" must be one of ${operators.join(" ")}`,
+    );
+  }
+
+  checkOperand(expression.a, `${name}.a`);
+  checkOperand(expression.b, `${name}.b`);
+};
+
+// a side is fine as a number or an attribute name, anything else must be another expression
+const checkOperand = (operand: any, name: string): void => {
+  if (typeof operand === "number" || typeof operand === "string") {
+    return;
+  }
+
+  checkExpression(operand, name);
+};
+
+const checkQuery = (query: any): void => {
+  if (!objectCheck(query)) {
+    throw new Error("Invalid DSL: the query must be an object");
+  }
+
+  if (typeof query.security !== "string") {
+    throw new Error('Invalid DSL: "security" must be a string');
+  }
+
+  checkExpression(query.expression, "expression");
+};
+
 // this now reads the text the user typed then finds the security and we get back the final number
 export const evaluate = (text: string): number => {
   // JSON.parse throws here so we catch that
-  let query: Query;
+  let parsed: any;
   try {
-    query = JSON.parse(text);
+    parsed = JSON.parse(text);
   } catch (e) {
     throw new Error(`Invalid JSON: ${(e as Error).message}`);
   }
-  const { security, expression } = query;
+
+  checkQuery(parsed);
+  const { security, expression } = parsed as Query;
 
   // we cast to a number for now, will deal with edge cases later
   const securityId = securities.find((s) => s.symbol === security)

@@ -32,6 +32,57 @@ describe("rejects malformed JSON", () => {
   });
 });
 
+describe("rejects a wrongly shaped JSON", () => {
+  it("throws when expression is missing", () => {
+    const dsl = `{
+      "wrong": 123,
+      "security": "BCD"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow('"expression" must be an object');
+  });
+
+  it("throws when the security isn't a string", () => {
+    const dsl = `{
+      "expression": {"fn": "*", "a": "sales", "b": 2},
+      "security": 1
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow('"security" must be a string');
+  });
+
+  it("throws when operator isn't known", () => {
+    const dsl = `{
+      "expression": {"fn": "^", "a": "sales", "b": 2},
+      "security": "ABC"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow('"expression.fn" must be one of');
+  });
+
+  it("throws when a side is not a number, an attribute or an expression", () => {
+    const dsl = `{
+      "expression": {"fn": "*", "a": true, "b": 2},
+      "security": "ABC"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow('"expression.a" must be an object');
+  });
+
+  it("names the path when when we have an issue inside a nested expression", () => {
+    const dsl = `{
+      "expression": {
+        "fn": "-",
+        "a": {"fn": "-", "a": "eps", "b": "shares"},
+        "b": {"fn": "%", "a": "assets", "b": "liabilities"}
+      },
+      "security": "CDE"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow('"expression.b.fn" must be one of');
+  });
+});
+
 describe("evaluates a nested expression", () => {
   it("subtracts the result of two subtractions", () => {
     const dsl = `{
