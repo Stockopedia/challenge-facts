@@ -32,10 +32,21 @@ const getNumber = (
 
   // it must be an attribute name
   const attribute = attributes.find((attr) => attr.name === operand);
+  if (!attribute) {
+    throw new Error(`Unknown attribute "${operand}"`);
+  }
+
+  // the attribute might exist but not every security has a fact for it
   const fact = facts.find(
-    (f) => f.security_id === securityId && f.attribute_id === attribute?.id,
+    (f) => f.security_id === securityId && f.attribute_id === attribute.id,
   );
-  return fact?.value as number;
+  if (!fact) {
+    throw new Error(
+      `We don't have a fact for attribute "${operand}" on the security with id ${securityId}`,
+    );
+  }
+
+  return fact.value;
 };
 
 // both sides have to be numbers before we can apply the operator, now a side can be another expression hence we calls getNumber which is then calling calculate again
@@ -115,9 +126,10 @@ export const evaluate = (text: string): number => {
   checkQuery(parsed);
   const { security, expression } = parsed as Query;
 
-  // we cast to a number for now, will deal with edge cases later
-  const securityId = securities.find((s) => s.symbol === security)
-    ?.id as number;
+  const foundSecurity = securities.find((s) => s.symbol === security);
+  if (!foundSecurity) {
+    throw new Error(`Unknown security "${security}"`);
+  }
 
-  return calculate(expression, securityId);
+  return calculate(expression, foundSecurity.id);
 };

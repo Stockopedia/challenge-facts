@@ -83,6 +83,27 @@ describe("rejects a wrongly shaped JSON", () => {
   });
 });
 
+describe("rejects a lookup that fails", () => {
+  it("throws when the security does not exist", () => {
+    const dsl = `{
+      "expression": {"fn": "*", "a": "sales", "b": 2},
+      "security": "ZZZ"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow('Unknown security "ZZZ"');
+  });
+
+  it("throws when attribute does not exist", () => {
+    const dsl = `{
+      "expression": {"fn": "*", "a": "turnover", "b": 2},
+      "security": "ABC"
+    }`;
+
+    expect(() => evaluate(dsl)).toThrow('Unknown attribute "turnover"');
+  });
+
+});
+
 describe("evaluates a nested expression", () => {
   it("subtracts the result of two subtractions", () => {
     const dsl = `{

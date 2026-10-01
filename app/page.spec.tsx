@@ -48,6 +48,17 @@ describe("Index page", () => {
     expect(screen.getByTestId("output")).toHaveValue("");
   });
 
+  it("should show an error (and no result) when the security doesn't exist", () => {
+    fireEvent.click(screen.getByTestId("button-missing-security"));
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    expect(screen.getByTestId("error")).toHaveTextContent(
+      'Unknown security "ZZZ"',
+    );
+    expect(screen.queryByTestId("success")).not.toBeInTheDocument();
+    expect(screen.getByTestId("output")).toHaveValue("");
+  });
+
   it("should show an error (and no result) when the DSL has the wrong shape", () => {
     fireEvent.click(screen.getByTestId("button-invalid-dsl"));
     fireEvent.click(screen.getByTestId("run-button"));
