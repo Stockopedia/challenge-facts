@@ -2,7 +2,19 @@
 
 import { ChangeEvent, FunctionComponent, useState } from "react";
 
+import attributes from "../data/attributes.json";
+import facts from "../data/facts.json";
+import securities from "../data/securities.json";
+import {
+  FactsInterpreter,
+  InMemoryFactRepository,
+  type Result,
+} from "../lib/dsl";
 import styles from "./page.module.css";
+
+const interpreter = new FactsInterpreter(
+  new InMemoryFactRepository(securities, attributes, facts),
+);
 
 interface DSLExample {
   id: string;
@@ -67,7 +79,17 @@ const examples: readonly DSLExample[] = [
 
 const Home: FunctionComponent = () => {
   const [expression, setExpression] = useState<string>(examples[0].dsl);
+  const [lastRun, setLastRun] = useState<{
+    input: string;
+    result: Result<number>;
+  } | null>(null);
+
+  // A result is only shown for the exact input it was computed from.
+  const result = lastRun?.input === expression ? lastRun.result : null;
+
   const setDsl = (dsl: string) => () => setExpression(dsl);
+  const run = () =>
+    setLastRun({ input: expression, result: interpreter.run(expression) });
 
   return (
     <main className={styles.container}>
@@ -116,13 +138,25 @@ const Home: FunctionComponent = () => {
           }
           rows={8}
         ></textarea>
-        <div className={[styles.message, styles.messageSuccess].join(" ")}>
-          DSL query ran successfully!
-        </div>
-        <div className={[styles.message, styles.messageError].join(" ")}>
-          There is a problem with your DSL query.
-        </div>
-        <button data-testid="run-button" type="button">
+        {result?.ok && (
+          <div
+            role="status"
+            data-testid="success-message"
+            className={[styles.message, styles.messageSuccess].join(" ")}
+          >
+            DSL query ran successfully!
+          </div>
+        )}
+        {result && !result.ok && (
+          <div
+            role="alert"
+            data-testid="error-message"
+            className={[styles.message, styles.messageError].join(" ")}
+          >
+            There is a problem with your DSL query: {result.error.message}
+          </div>
+        )}
+        <button data-testid="run-button" type="button" onClick={run}>
           Run
         </button>
       </div>
@@ -133,6 +167,8 @@ const Home: FunctionComponent = () => {
         <textarea
           id="dsl-output"
           className={styles.field}
+          data-testid="output"
+          value={result?.ok ? String(result.value) : ""}
           readOnly
           rows={1}
         ></textarea>
