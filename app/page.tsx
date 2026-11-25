@@ -1,8 +1,11 @@
 "use client";
 
-import { ChangeEvent, FunctionComponent, useState } from "react";
+import { ChangeEvent, FunctionComponent, useCallback, useState } from "react";
 
 import styles from "./page.module.css";
+import interpret from "@/lib/dsl/interpret";
+import parse from "@/lib/dsl/parse";
+import { DSLError } from "@/lib/dsl/errors";
 
 interface DSLExample {
   id: string;
@@ -66,8 +69,27 @@ const examples: readonly DSLExample[] = [
 ];
 
 const Home: FunctionComponent = () => {
+  const [error, setError] = useState<string>();
+  const [result, setResult] = useState<number>();
   const [expression, setExpression] = useState<string>(examples[0].dsl);
   const setDsl = (dsl: string) => () => setExpression(dsl);
+
+  const parseDSL = useCallback(() => {
+    setError(undefined);
+    setResult(undefined);
+    try {
+      const parsedExpression = parse(expression);
+      const expressionResult = interpret(parsedExpression);
+      setResult(expressionResult);
+    } catch (e) {
+      if (e instanceof DSLError) {
+        setError(e.message);
+      } else {
+        // Error is unexpected, therefore rethrow
+        throw e;
+      }
+    }
+  }, [expression]);
 
   return (
     <main className={styles.container}>
@@ -116,13 +138,23 @@ const Home: FunctionComponent = () => {
           }
           rows={8}
         ></textarea>
-        <div className={[styles.message, styles.messageSuccess].join(" ")}>
-          DSL query ran successfully!
-        </div>
-        <div className={[styles.message, styles.messageError].join(" ")}>
-          There is a problem with your DSL query.
-        </div>
-        <button data-testid="run-button" type="button">
+        {result && (
+          <div
+            data-testid="success-message"
+            className={[styles.message, styles.messageSuccess].join(" ")}
+          >
+            DSL query ran successfully!
+          </div>
+        )}
+        {error && (
+          <div
+            data-testid="error-message"
+            className={[styles.message, styles.messageError].join(" ")}
+          >
+            There is a problem with your DSL query. {error}
+          </div>
+        )}
+        <button data-testid="run-button" type="button" onClick={parseDSL}>
           Run
         </button>
       </div>
@@ -135,6 +167,7 @@ const Home: FunctionComponent = () => {
           className={styles.field}
           readOnly
           rows={1}
+          value={result ?? ""}
         ></textarea>
       </div>
     </main>
