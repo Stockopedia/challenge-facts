@@ -27,6 +27,14 @@
   color: var(--message-color);
   background: var(--message-background);
   border-radius: 4px;
+  animation: message-appear 250ms ease-out;
+}
+
+@keyframes message-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }
 
 .messageError {
